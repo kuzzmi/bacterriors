@@ -1,13 +1,16 @@
 module Main exposing (..)
 
 import Html exposing (..)
+import Time exposing (Time)
+import AnimationFrame
 
 
 main =
-    Html.beginnerProgram
-        { model = model
+    Html.program
+        { init = init
         , view = view
         , update = update
+        , subscriptions = subscriptions
         }
 
 
@@ -30,7 +33,15 @@ type alias Position =
 type alias Bacterrior =
     { id : ID
     , position : Position
+    , healthPoints : Int
+    , level : Int
+    , experience : Int
     }
+
+
+init : ( Model, Cmd Msg )
+init =
+    model ! []
 
 
 model : Model
@@ -44,13 +55,25 @@ model =
 
 type Msg
     = Noop
+    | Tick Time
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Noop ->
-            model
+            model ! []
+
+        Tick time ->
+            model ! []
+
+
+
+-- SUBSCRIPTIONS
+
+
+subscriptions model =
+    AnimationFrame.times Tick
 
 
 
