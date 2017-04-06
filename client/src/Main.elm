@@ -106,6 +106,7 @@ update msg model =
                     model ! []
 
 
+updateGame : Model -> Model
 updateGame model =
     { model
         | bacterriors = List.map updateBacterrior model.bacterriors
@@ -119,11 +120,11 @@ updateFrame frame =
     (frame + 1) % 60
 
 
-updateBacterrior : Model -> Bacterrior
-updateBacterrior model =
+updateBacterrior : Bacterrior -> Bacterrior
+updateBacterrior bacterrior =
     let
         ( posX, posY ) =
-            model.bacterrior.position
+            bacterrior .position
 
         ( moveX, moveY ) =
             model.moveTo
