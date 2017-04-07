@@ -122,26 +122,27 @@ updateFrame frame =
 
 updateBacterrior : Bacterrior -> Bacterrior
 updateBacterrior bacterrior =
-    let
-        ( posX, posY ) =
-            bacterrior .position
-
-        ( moveX, moveY ) =
-            model.moveTo
-
-        shouldUpdatePosition =
-            model.frame % model.bacterrior.speed == 0
-
-        updatePosition bacterrior =
-            if shouldUpdatePosition then
-                { bacterrior | position = ( posX + moveX, posY + moveY ) }
-            else
-                bacterrior
-    in
-        updatePosition model.bacterrior
+    bacterrior
 
 
 
+-- let
+--     ( posX, posY ) =
+--         bacterrior.position
+--
+--     ( moveX, moveY ) =
+--         model.moveTo
+--
+--     shouldUpdatePosition =
+--         model.frame % model.bacterrior.speed == 0
+--
+--     updatePosition bacterrior =
+--         if shouldUpdatePosition then
+--             { bacterrior | position = ( posX + moveX, posY + moveY ) }
+--         else
+--             bacterrior
+-- in
+--     updatePosition model.bacterrior
 -- SUBSCRIPTIONS
 
 
@@ -223,15 +224,18 @@ bacterriorView bacterrior =
             ]
 
 
+backgroundView : Html Msg
+backgroundView =
+    rect
+        [ width "100%"
+        , height "100%"
+        , fill "#05668D"
+        ]
+        []
+
+
 view : Model -> Html Msg
 view model =
     svg
-        [ width "500", height "500", viewBox "0 0 120 120" ]
-        [ rect
-            [ width "100%"
-            , height "100%"
-            , fill "#05668D"
-            ]
-            []
-        , bacterriorView model.bacterrior
-        ]
+        [ width "500", height "500", viewBox "0 0 100 100" ]
+        ([ backgroundView ] ++ (List.map bacterriorView model.bacterriors))
