@@ -30,7 +30,9 @@ type Key
 
 
 type alias Model =
-    { bacterriors : List Bacterrior
+    { playerId : ID
+    , world : World
+    , bacterriors : List Bacterrior
     , moveTo : Position
     , frame : Int
     }
@@ -44,9 +46,19 @@ type alias Position =
     ( Int, Int )
 
 
+type alias Size =
+    ( Int, Int )
+
+
 type alias Bacterrior =
     { id : ID
     , speed : Int
+    , position : Position
+    }
+
+
+type alias World =
+    { size : Size
     , position : Position
     }
 
@@ -58,12 +70,21 @@ init =
 
 model : Model
 model =
-    { bacterriors =
+    { playerId = "A"
+    , bacterriors =
         [ { id = "A"
           , speed = 1
           , position = ( 0, 0 )
           }
+        , { id = "B"
+          , speed = 1
+          , position = ( 25, 25 )
+          }
         ]
+    , world =
+        { size = ( 500, 500 )
+        , position = ( 30, 30 )
+        }
     , moveTo = ( 0, 0 )
     , frame = 1
     }
@@ -110,6 +131,7 @@ updateGame : Model -> Model
 updateGame model =
     { model
         | bacterriors = List.map updateBacterrior model.bacterriors
+        , world = updateWorld model
         , moveTo = ( 0, 0 )
         , frame = updateFrame model.frame
     }
@@ -118,6 +140,21 @@ updateGame model =
 updateFrame : Int -> Int
 updateFrame frame =
     (frame + 1) % 60
+
+
+updateWorld : Model -> World
+updateWorld model =
+    let
+        ( posX, posY ) =
+            model.world.position
+
+        ( moveX, moveY ) =
+            model.moveTo
+
+        world =
+            model.world
+    in
+        { world | position = ( posX + moveX, posY + moveY ) }
 
 
 updateBacterrior : Bacterrior -> Bacterrior
@@ -175,6 +212,9 @@ keyPressed code =
 
 
 -- VIEW
+--  transform transformValue
+--         transformValue =
+--             "translate(" ++ (toString posX) ++ "," ++ (toString posY) ++ ")"
 
 
 bacterriorView : Bacterrior -> Html Msg
@@ -182,13 +222,8 @@ bacterriorView bacterrior =
     let
         ( posX, posY ) =
             bacterrior.position
-
-        transformValue =
-            "translate(" ++ (toString posX) ++ "," ++ (toString posY) ++ ")"
     in
-        g
-            [ transform transformValue
-            ]
+        g []
             [ rect
                 [ fill "#00A896"
                 , stroke "#028090"
@@ -224,18 +259,28 @@ bacterriorView bacterrior =
             ]
 
 
-backgroundView : Html Msg
-backgroundView =
-    rect
-        [ width "100%"
-        , height "100%"
-        , fill "#05668D"
-        ]
-        []
+worldView : World -> Html Msg
+worldView world =
+    let
+        ( posX, posY ) =
+            world.position
+
+        ( w, h ) =
+            world.size
+    in
+        rect
+            [ x <| toString posX
+            , y <| toString posY
+            , width <| toString w
+            , height <| toString h
+            , fill "#05668D"
+            , stroke "#056600"
+            ]
+            []
 
 
 view : Model -> Html Msg
 view model =
     svg
         [ width "500", height "500", viewBox "0 0 100 100" ]
-        ([ backgroundView ] ++ (List.map bacterriorView model.bacterriors))
+        ([ worldView model.world ] ++ (List.map bacterriorView model.bacterriors))
