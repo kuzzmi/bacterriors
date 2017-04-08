@@ -6,6 +6,7 @@ import AnimationFrame
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
 import Keyboard
+import Debug
 
 
 main =
@@ -177,21 +178,22 @@ shouldUpdatePosition model =
             model.world.position
 
         overLeft =
-            wX - moveX >= 0
+            wX - moveX > 0
 
         overBottom =
-            wY - moveY > sY
+            wY - moveY < -1 * sY + 10
 
         overRight =
-            wX - moveX > sX
+            wX - moveX < -1 * sX + 10
 
         overTop =
-            wY - moveY >= 0
+            wY - moveY > 0
     in
-        overLeft || overRight || overTop || overBottom
+        not (overLeft || overTop || overRight || overBottom)
 
 
 
+-- overLeft || overRight || overTop || overBottom
 -- not (overLeft || overTop)
 -- not ()
 
@@ -199,14 +201,20 @@ shouldUpdatePosition model =
 updateWorld : Model -> Model
 updateWorld model =
     let
-        ( posX, posY ) =
-            model.world.position
-
         ( moveX, moveY ) =
             model.moveTo
 
+        ( sX, sY ) =
+            model.world.size
+
+        ( posX, posY ) =
+            model.world.position
+
         updatePosition world =
-            { world | position = ( posX - moveX, posY - moveY ) }
+            if (shouldUpdatePosition model) == True then
+                { world | position = ( posX - moveX, posY - moveY ) }
+            else
+                world
     in
         { model | world = model.world |> updatePosition }
 
