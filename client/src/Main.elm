@@ -5,7 +5,10 @@ import Time exposing (Time)
 import AnimationFrame
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
+import Task
+import Window
 import Keyboard
+import Mouse
 import Debug
 
 
@@ -31,9 +34,11 @@ type Key
 
 
 type alias Model =
-    { player : Bacterrior
+    { windowSize : Window.Size
+    , player : Bacterrior
     , world : World
     , bacterriors : List Bacterrior
+    , food : List Food
     , moveTo : Position
     , frame : Int
     }
@@ -64,14 +69,19 @@ type alias World =
     }
 
 
+type alias Food =
+    { position : Position }
+
+
 init : ( Model, Cmd Msg )
 init =
-    model ! []
+    ( model, Task.perform WindowResize Window.size )
 
 
 model : Model
 model =
-    { player =
+    { windowSize = { width = 0, height = 0 }
+    , player =
         { id = "A"
         , speed = 1
         , position = ( 0, 0 )
@@ -86,6 +96,10 @@ model =
         { size = ( 500, 500 )
         , position = ( 0, 0 )
         }
+    , food =
+        [ { position = ( 15, 15 )
+          }
+        ]
     , moveTo = ( 0, 0 )
     , frame = 1
     }
@@ -99,6 +113,8 @@ type Msg
     = Noop
     | Tick Time
     | KeyPress Key
+    | MouseMoves Mouse.Position
+    | WindowResize Window.Size
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -107,8 +123,33 @@ update msg model =
         Noop ->
             model ! []
 
+        WindowResize size ->
+            { model | windowSize = size } ! []
+
         Tick time ->
             updateGame model ! []
+
+        MouseMoves { x, y } ->
+            let
+                cX =
+                    model.windowSize.width // 2
+
+                cY =
+                    model.windowSize.height // 2
+
+                x_ =
+                    if x - cX > 0 then
+                        1
+                    else
+                        -1
+
+                y_ =
+                    if y - cY > 0 then
+                        1
+                    else
+                        -1
+            in
+                { model | moveTo = ( x_, y_ ) } ! []
 
         KeyPress key ->
             case key of
@@ -137,9 +178,9 @@ updateGame model =
     model
         |> updatePlayer
         |> updateBacterriors
+        |> updateFood
         |> updateWorld
         |> updateFrame
-        |> updateMoveTo
 
 
 
@@ -150,10 +191,6 @@ updateGame model =
 --     , moveTo = ( 0, 0 )
 --     , frame = updateFrame model.frame
 -- }
-
-
-updateMoveTo model =
-    { model | moveTo = ( 0, 0 ) }
 
 
 updateFrame : Model -> Model
@@ -250,6 +287,22 @@ updateBacterriors model =
         { model | bacterriors = List.map updatePosition model.bacterriors }
 
 
+updateFood : Model -> Model
+updateFood model =
+    let
+        ( moveX, moveY ) =
+            model.moveTo
+
+        updatePosition food =
+            let
+                ( posX, posY ) =
+                    food.position
+            in
+                { food | position = ( posX - moveX, posY - moveY ) }
+    in
+        { model | food = List.map updatePosition model.food }
+
+
 
 -- SUBSCRIPTIONS
 
@@ -259,6 +312,8 @@ subscriptions model =
     Sub.batch
         [ AnimationFrame.times Tick
         , Keyboard.downs keyPressed
+        , Mouse.moves MouseMoves
+        , Window.resizes WindowResize
         ]
 
 
@@ -279,6 +334,27 @@ keyPressed code =
 
         _ ->
             KeyPress KeyNone
+
+
+foodView : Food -> Html Msg
+foodView food =
+    let
+        ( posX, posY ) =
+            food.position
+
+        transformValue =
+            "translate(" ++ (posX + 45 |> toString) ++ "," ++ (posY + 45 |> toString) ++ ")"
+    in
+        g [ transform transformValue ]
+            [ rect
+                [ fill "#F0F3BD"
+                , width "1"
+                , height "1"
+                , x "0"
+                , y "-2"
+                ]
+                []
+            ]
 
 
 bacterriorView : Bacterrior -> Html Msg
@@ -386,6 +462,12 @@ worldView world =
             world.size
     in
         [ rect
+            [ width "100%"
+            , height "100%"
+            , fill "#063F56"
+            ]
+            []
+        , rect
             [ x <| toString (posX + 45)
             , y <| toString (posY + 45)
             , width <| toString w
@@ -400,4 +482,8 @@ view : Model -> Html Msg
 view model =
     svg
         [ width "100%", height "100%", viewBox "0 0 100 100" ]
-        (worldView model.world ++ [ playerView model.player ] ++ (List.map bacterriorView model.bacterriors))
+        (worldView model.world
+            ++ [ playerView model.player ]
+            ++ (List.map bacterriorView model.bacterriors)
+            ++ (List.map foodView model.food)
+        )
