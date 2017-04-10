@@ -169,10 +169,6 @@ update msg model =
                     model ! []
 
 
-
--- , bacterriors = List.map updateBacterrior model.bacterriors
-
-
 updateGame : Model -> Model
 updateGame model =
     model
@@ -181,16 +177,6 @@ updateGame model =
         |> updateFood
         |> updateWorld
         |> updateFrame
-
-
-
---
--- { model
---     | player = updatePlayer model
---     , world = updateWorld model
---     , moveTo = ( 0, 0 )
---     , frame = updateFrame model.frame
--- }
 
 
 updateFrame : Model -> Model
